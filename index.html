@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubCatOnly - Wikimedia Commons</title>
+    <style>
+        :root {
+            /* Light Theme Defaults */
+            --primary: #3366cc;
+            --primary-hover: #2a4b8d;
+            --bg: #f8f9fa;
+            --container-bg: #ffffff;
+            --text: #202122;
+            --text-muted: #54595d;
+            --border: #c8ccd1;
+            --input-bg: #ffffff;
+            --success: #00af89;
+            --success-hover: #008f70;
+            --removed: #d33;
+            --log-bg: #ffffff;
+            --log-item-border: #eee;
+            --result-bg: #eaf3ff;
+            --result-border: #a2a9b1;
+            --depth-tag-bg: #e2e2e2;
+            --depth-tag-text: #555;
+        }
+
+        /* Dark Theme Overrides */
+        body.dark-theme {
+            --primary: #6699ff;
+            --primary-hover: #8fb3ff;
+            --bg: #121212;
+            --container-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border: #444;
+            --input-bg: #2d2d2d;
+            --success: #00d4a5;
+            --success-hover: #00b38a;
+            --removed: #ff6b6b;
+            --log-bg: #2d2d2d;
+            --log-item-border: #444;
+            --result-bg: #2a3b55;
+            --result-border: #556677;
+            --depth-tag-bg: #444;
+            --depth-tag-text: #ccc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Header & Theme Toggle */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 { margin: 0; color: var(--primary); }
+        
+        .theme-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .theme-btn:hover { background-color: var(--depth-tag-bg); }
+
+        p { color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) { .layout { grid-template-columns: 1fr; } }
+
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: var(--text); }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: var(--input-bg);
+            color: var(--text);
+        }
+
+        button.action-btn {
+            background-color: var(--primary);
+            color: #fff; /* Always white text on primary button */
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        button.action-btn:hover { background-color: var(--primary-hover); }
+        button.action-btn:disabled { background-color: var(--border); color: var(--text-muted); cursor: wait; }
+
+        /* Log Area */
+        .log-area {
+            background: var(--log-bg);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text);
+        }
+        .log-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--log-item-border); }
+        .depth-tag {
+            display: inline-block;
+            background: var(--depth-tag-bg);
+            color: var(--depth-tag-text);
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 11px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .tag-removed { text-decoration: line-through; color: var(--removed); font-weight: bold; }
+        .path-arrow { color: var(--text-muted); font-size: 0.9em; display: block; margin-top: 2px; }
+
+        /* Results Box */
+        .results-box {
+            display: none;
+            margin-top: 25px;
+            padding: 15px;
+            background: var(--result-bg);
+            border: 1px solid var(--result-border);
+            border-radius: 4px;
+        }
+        .copy-btn {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .copy-btn:hover { background-color: var(--success-hover); }
+
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+        footer a { color: var(--primary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-row">
+        <h1>SubCatOnly</h1>
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+    </div>
+    
+    <p>Enter a list of categories to identify and remove redundant parent categories on Wikimedia Commons. This tool checks up to 6 levels of ancestry to prevent over-categorization.</p>
+
+    <div class="layout">
+        <div>
+            <label for="catInput">Input Categories</label>
+            <textarea id="catInput" placeholder="Culture of Punjab, India&#10;[[Category:Culture of Punjab, india]]&#10;Mansa district, Punjab&#10;Burj Bhalaike"></textarea>
+            <button id="processBtn" class="action-btn" onclick="startScan()">Prune Categories</button>
+        </div>
+
+        <div>
+            <label>Analysis Log</label>
+            <div id="logArea" class="log-area">
+                <div style="color: var(--text-muted); text-align: center; margin-top: 40px; font-style: italic;">Ready to process...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultContainer" class="results-box">
+        <label for="finalOutput">Optimized List</label>
+        <textarea id="finalOutput" style="height: 150px;"></textarea>
+        <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+    </div>
+
+    <footer>
+        Made with ❤️ by <a href="https://meta.wikimedia.org/wiki/User:Kuldeepburjbhalaike" target="_blank">Kuldeep</a> | 
+        <a href="https://github.com/Kuldeepburjbhalaike/Commons-Attribution" target="_blank">
+        <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        Source Code
+        </a>
+    </footer>
+</div>
+
+<script>
+    // --- Theme Logic ---
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+            document.body.classList.add('dark-theme');
+        }
+    }
+    
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+    
+    // Run theme check immediately
+    initTheme();
+
+    // --- Core Logic ---
+    const API_URL = "https://commons.wikimedia.org/w/api.php";
+    const MAX_DEPTH = 6; 
+    const BATCH_SIZE = 50; 
+    let globalCategoryCache = {}; 
+
+    async function startScan() {
+        const inputArea = document.getElementById('catInput');
+        const logArea = document.getElementById('logArea');
+        const btn = document.getElementById('processBtn');
+        const finalOutput = document.getElementById('finalOutput');
+        const resContainer = document.getElementById('resultContainer');
+
+        // 1. Parse Input
+        let rawLines = inputArea.value.split('\n');
+        let cleanCats = [];
+        let formatMap = {}; 
+
+        rawLines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
+
+            let clean = trimmedLine
+                .replace(/\[\[/g, '')
+                .replace(/\]\]/g, '')
+                .replace(/Category:/i, '')
+                .replace(/_/g, ' ')
+                .trim();
+            
+            clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+
+            if (clean) {
+                cleanCats.push(clean);
+                if (!formatMap[clean]) formatMap[clean] = trimmedLine;
+            }
+        });
+
+        cleanCats = [...new Set(cleanCats)]; 
+
+        if (cleanCats.length === 0) {
+            alert("Please enter at least one valid category.");
+            return;
+        }
+
+        // UI Reset
+        btn.disabled = true; 
+        btn.innerText = "Analyzing...";
+        logArea.innerHTML = "";
+        resContainer.style.display = "none";
+        globalCategoryCache = {}; 
+
+        let categoriesToRemove = new Set();
+        let logs = [];
+
+        try {
+            // 2. BFS Scan
+            for (let i = 0; i < cleanCats.length; i++) {
+                const child = cleanCats[i];
+                logArea.innerHTML += `<div style="color:var(--text-muted); border-bottom:1px dashed var(--log-item-border);">Scanning: <b>${child}</b>...</div>`;
+                logArea.scrollTop = logArea.scrollHeight;
+
+                let queue = [child];
+                let visited = new Set([child]);
+                let currentDepth = 0;
+
+                while (queue.length > 0 && currentDepth < MAX_DEPTH) {
+                    currentDepth++;
+                    const nextQueue = [];
+                    const parentMap = await fetchBatchParents(queue);
+
+                    for (const [node, parents] of Object.entries(parentMap)) {
+                        for (const parent of parents) {
+                            if (cleanCats.includes(parent) && parent !== child) {
+                                if (!categoriesToRemove.has(parent)) {
+                                    categoriesToRemove.add(parent);
+                                    logs.push({
+                                        removed: parent,
+                                        keeper: child,
+                                        depth: currentDepth,
+                                        via: node === child ? "Direct Parent" : `via ${node}`
+                                    });
+                                }
+                            }
+                            if (!visited.has(parent)) {
+                                visited.add(parent);
+                                nextQueue.push(parent);
+                            }
+                        }
+                    }
+                    queue = nextQueue; 
+                }
+            }
+
+            // 3. Finalize
+            renderLogs(logs);
+            const finalList = cleanCats
+                .filter(c => !categoriesToRemove.has(c))
+                .map(c => formatMap[c]); 
+
+            finalOutput.value = finalList.join('\n');
+            resContainer.style.display = "block";
+
+        } catch (e) {
+            console.error(e);
+            logArea.innerHTML += `<div style="color:var(--removed); margin-top:10px;">Error: ${e.message}</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Prune Categories";
+        }
+    }
+
+    async function fetchBatchParents(categoryList) {
+        let results = {};
+        let uniqueToFetch = [];
+
+        categoryList.forEach(cat => {
+            if (globalCategoryCache[cat]) {
+                results[cat] = globalCategoryCache[cat];
+            } else {
+                uniqueToFetch.push(cat);
+            }
+        });
+
+        if (uniqueToFetch.length === 0) return results;
+
+        for (let i = 0; i < uniqueToFetch.length; i += BATCH_SIZE) {
+            const chunk = uniqueToFetch.slice(i, i + BATCH_SIZE);
+            const formattedTitles = chunk.map(c => `Category:${c}`).join('|');
+
+            const params = new URLSearchParams({
+                action: 'query', format: 'json', prop: 'categories',
+                titles: formattedTitles, cllimit: 'max', clshow: '!hidden', origin: '*'
+            });
+
+            const req = await fetch(`${API_URL}?${params}`);
+            const data = await req.json();
+            const pages = data.query?.pages || {};
+
+            Object.values(pages).forEach(page => {
+                const title = page.title.replace('Category:', '');
+                const parents = (page.categories || []).map(c => c.title.replace('Category:', ''));
+                results[title] = parents;
+                globalCategoryCache[title] = parents;
+            });
+            
+            chunk.forEach(c => {
+               if (!globalCategoryCache[c]) globalCategoryCache[c] = [];
+               if (!results[c]) results[c] = [];
+            });
+        }
+        return results;
+    }
+
+    function renderLogs(logs) {
+        const logArea = document.getElementById('logArea');
+        let html = "<div style='margin-bottom:10px; color:var(--success);'><b>Scan Complete.</b></div>";
+
+        if (logs.length === 0) {
+            html += "<div style='color:var(--text-muted)'>No over-categorization found.</div>";
+        } else {
+            logs.forEach(log => {
+                html += `<div class="log-item">
+                    Removing <span class="tag-removed">${log.removed}</span>
+                    <span class="path-arrow">↳ Ancestor of <b>${log.keeper}</b> (${log.depth} levels up)</span>
+                </div>`;
+            });
+        }
+        logArea.innerHTML = html;
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("finalOutput");
+        copyText.select();
+        navigator.clipboard.writeText(copyText.value);
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = originalText, 2000);
+    }
+</script>
+
+</body>
+</html>
